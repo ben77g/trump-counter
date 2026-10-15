@@ -4,6 +4,23 @@ Inputs: prof.jpg, trump.jpg (originals). rembg downloads u2net_human_seg.onnx (~
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 rng = np.random.default_rng(0x168)
+import os
+
+# Prof: the owner uploaded an already-cut grayscale head on a white background (prof_upload.jpg, 2026-10-15).
+# It is used instead of rembg: white that touches the image border becomes transparent (soft ramp 210..250).
+def head_from_white_bg(src, dst):
+    from scipy import ndimage
+    im = Image.open(src).convert("RGB")
+    L = np.array(im.convert("L")).astype(float)
+    lab, _ = ndimage.label(L >= 210)
+    border = set(np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]]))) - {0}
+    bg = np.isin(lab, list(border))
+    alpha = np.where(bg, np.clip((250 - L) / 40, 0, 1), 1.0)
+    alpha = np.array(Image.fromarray((alpha * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(0.7)))
+    rgba = np.dstack([np.array(im), alpha])
+    out = Image.fromarray(rgba.astype(np.uint8), "RGBA")
+    out = out.crop(out.getbbox()); out.thumbnail((480, 480)); out.save(dst, optimize=True)
+    print("prof (uploaded)", out.size)
 
 # ---------- 1. head cutouts ----------
 from rembg import remove, new_session
@@ -16,6 +33,8 @@ SRC = {"prof": ("prof.jpg", 345, 14), "trump": ("trump_mugshot.jpg", 860, 30)}
 CLEAN = {"prof": {"t": 140, "erode": 2, "erode_right": 5}}
 XCROP = {"trump": (350, 990)}        # columns kept, so the wide shoulders of the mugshot do not shrink the head
 for n, (src, cut, fade) in SRC.items():
+    if n == "prof" and os.path.exists("prof_upload.jpg"):
+        head_from_white_bg("prof_upload.jpg", "prof_head.png"); continue
     im = Image.open(src).convert("RGB")
     rgba = np.array(remove(im, session=sess))
     a = rgba[:, :, 3].astype(float)
