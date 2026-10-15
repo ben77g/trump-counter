@@ -30,8 +30,11 @@ Two cut-out heads, a shared live counter with +1, a left board with the top 5 le
 - Only the owner can press +1, unless mode.json says {"open": true}. The owner's browser holds a key in localStorage
   (`tcOwner`); index.html contains only its SHA-256 (OWNER_HASH). To enrol a browser, open the site once with `#owner=<key>`
   appended; the key itself is kept outside the repo (~/agent/workspace/.counter-owner-key, mode 600). Never commit it.
-- `./set_mode.sh open|close` flips mode.json, commits and pushes. The page re-reads mode.json every 30 s (cache-busted), so a
-  change shows up about 1 to 2 minutes after the push (Pages deploy time). If mode.json cannot be read the page stays closed.
+- `./set_mode.sh exempt [date]` writes mode.json {"open_for": "<date>"}: the public +1 is open for ONE lecture day only
+  (default today if it is a lecture day, else the next one) and closes by itself afterwards, because the page only opens
+  when open_for equals today's date (Toronto time). It is an exemption notice, not a toggle. `./set_mode.sh clear` cancels it.
+  The page re-reads mode.json every 30 s (cache-busted), so a change shows about 1 to 2 minutes after the push.
+  If mode.json cannot be read the page stays closed.
 - Limit: this is a client-side lock. Anyone who reads the page source can still call the counter API directly, because the
   namespace is public. It stops casual visitors, not someone determined. A real lock would need a server or secret keys.
 - The assistant's own notes (outside the repo) hold the owner's trigger phrases for open/close.

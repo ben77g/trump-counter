@@ -112,7 +112,7 @@ async function initOwner() {
 async function loadMode() {
   try {
     const r = await fetch("mode.json?t=" + Date.now(), { cache: "no-store" });
-    isOpen = r.ok && (await r.json()).open === true;
+    isOpen = r.ok && (await r.json()).open_for === todayStr();   // exemption for ONE lecture day, then closed again
   } catch (e) { isOpen = false; }      // fail closed
   render();
 }
