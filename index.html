@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trump Counter</title>
+<style>
+  body { margin:0; font-family: system-ui, sans-serif; background:#6b4423 url(bg.jpg) center/cover fixed no-repeat; color:#222; min-height:100vh; }
+  #board { position:fixed; left:14px; top:14px; width:262px; min-height:260px; max-height:calc(100vh - 28px); padding:22px 18px 26px; box-sizing:border-box;
+           background:#c99a60 url(board.jpg) center/cover; border-radius:10px; overflow:hidden;
+           box-shadow:0 10px 22px rgba(0,0,0,.55), inset 0 0 0 2px rgba(60,30,8,.45), inset 0 0 26px rgba(40,18,4,.5); }
+  /* burned in: dark char colour, scorch glow, rough edges from the SVG filter, multiplied into the grain */
+  #board .burn { color:#1f0d04; font-family:"Courier New", Courier, monospace; font-weight:700; filter:url(#burnrough); mix-blend-mode:multiply;
+                 text-shadow:0 0 2px rgba(15,5,0,.95), 0 0 7px rgba(70,28,4,.55); }
+  #board h2 { margin:0 0 4px; font-size:1.25rem; text-transform:uppercase; letter-spacing:.06em; text-align:center; border-bottom:3px double #1f0d04; padding-bottom:8px; }
+  #board .sub { font-size:.78rem; text-align:center; margin-bottom:12px; }
+  #board ol { padding-left:0; margin:0; list-style:none; counter-reset:n; }
+  #board li { margin:10px 0; font-size:1.02rem; counter-increment:n; }
+  #board li::before { content:counter(n) ". "; }
+  #board .empty { font-size:.95rem; text-align:center; }
+  main { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:0 16px 0 290px; box-sizing:border-box; }
+  .heart { position:relative; width:min(600px, 88vw, 78vh * 1.1); aspect-ratio: 100 / 90; filter:drop-shadow(0 14px 18px rgba(0,0,0,.55)); }
+  .heart svg { position:absolute; inset:0; width:100%; height:100%; }
+  .heart img { position:absolute; top:4%; width:41%; height:auto; filter:drop-shadow(0 3px 4px rgba(0,0,0,.5)); }
+  .heart img.prof { left:7%; } .heart img.trump { right:9%; width:37%; }
+  .heart .label { position:absolute; left:0; right:0; top:52%; text-align:center; color:#fff; text-shadow:0 2px 4px rgba(0,0,0,.6); }
+  .heart h1 { margin:0; font-size:clamp(1.1rem, 4.2vw, 2rem); letter-spacing:.04em; text-transform:uppercase; }
+  #count { font-size:clamp(2.6rem, 11vw, 6rem); font-weight:800; margin:0; line-height:1.05; }
+  #status { max-width:560px; background:rgba(255,255,255,.82); padding:6px 12px; border-radius:8px; }
+  button { font-size:1.6rem; padding:14px 36px; border:0; border-radius:12px; background:#b22222; color:#fff; cursor:pointer; }
+  button:active { transform:scale(.96); }
+  #status { margin-top:14px; color:#333; font-size:.95rem; }
+  #send { margin-top:26px; } #send h3 { margin:0 0 8px; font-size:1rem; }
+  button.small { font-size:1rem; padding:8px 16px; background:#333; }
+  button:disabled { opacity:.4; cursor:not-allowed; }
+  #submitmsg { margin-top:8px; font-size:.9rem; color:#666; }
+  #send select { font-size:1rem; padding:6px; max-width:90vw; }
+  @media (max-width:700px) {
+    #board { position:relative; left:auto; top:auto; width:auto; margin:12px; max-height:none; }
+    main { min-height:auto; padding:24px 16px; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="burnrough" x="-5%" y="-5%" width="110%" height="110%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="2.4"/>
+  </filter>
+</svg>
+<aside id="board">
+  <div class="burn">
+    <h2>Top 5 Lectures</h2>
+    <div class="sub">most Trump mentions in a lecture</div>
+    <ol id="top"></ol>
+    <div id="none" class="empty">No lectures yet.</div>
+  </div>
+</aside>
+<main>
+  <div class="heart">
+    <svg viewBox="0 0 100 90" aria-hidden="true">
+      <defs><radialGradient id="hg" cx="35%" cy="25%" r="80%"><stop offset="0" stop-color="#ff4a4a"/><stop offset=".55" stop-color="#d4141c"/><stop offset="1" stop-color="#7d0610"/></radialGradient></defs>
+      <path d="M50 88 C 12 56, 0 38, 0 25 C 0 9, 13 0, 26 0 C 38 0, 46 7, 50 15 C 54 7, 62 0, 74 0 C 87 0, 100 9, 100 25 C 100 38, 88 56, 50 88 Z" fill="url(#hg)"/>
+    </svg>
+    <img class="prof" src="prof_head.png" alt="">
+    <img class="trump" src="trump_head.png" alt="Donald Trump">
+    <div class="label"><h1>Trump Counter</h1><p id="count">0</p></div>
+  </div>
+  <button id="add" style="margin-top:16px">+1</button>
+  <div id="status"></div>
+  </main>
+<script>
+// ---- Config ----
+// Lectures: every Tuesday and Thursday, Thu Sep 3 to Tue Dec 1, 2026 (26 in total).
+// Add any cancelled dates to NO_CLASS as "YYYY-MM-DD".
+const FIRST = "2026-09-03", LAST = "2026-12-01", NO_CLASS = [];
+const TZ = "America/Toronto";
+// Shared storage: abacus.jasoncameron.dev (free counter API, no account, no email, no password).
+// One shared counter per lecture, key "C-<date>". Everyone sees the same number, refreshed every 3 seconds.
+// Its limit is 30 requests per 10 s per visitor, so today's counter is polled and past lectures are fetched
+// once, slowly, then cached in this browser (their totals are final).
+const API = "https://abacus.jasoncameron.dev";
+const NS = "trumpcounter-mooo-site";
+const POLL_MS = 3000;
+const $ = id => document.getElementById(id);
+
+const todayStr = () => new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year:"numeric", month:"2-digit", day:"2-digit" }).format(new Date());
+function lectureDates() {
+  const out = [];
+  const end = new Date(LAST + "T12:00:00Z");
+  for (let d = new Date(FIRST + "T12:00:00Z"); d <= end; d = new Date(d.getTime() + 86400000)) {
+    const dow = d.getUTCDay(), s = d.toISOString().slice(0, 10);
+    if ((dow === 2 || dow === 4) && !NO_CLASS.includes(s)) out.push(s);
+  }
+  return out;
+}
+const LECTURES = lectureDates();
+const label = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y, m-1, d).toLocaleDateString(undefined, { weekday:"short", month:"short", day:"numeric" }); };
+const lectureNo = s => LECTURES.indexOf(s) + 1;
+const isLectureDay = () => LECTURES.includes(todayStr());
+
+let counts = {};      // date -> shared count (from the server)
+let online = false;
+let pending = 0;      // clicks sent but not yet confirmed by a refresh
+
+function render() {
+  const t = todayStr(), live = isLectureDay();
+  $("count").textContent = live ? ((counts[t] || 0) + pending) : "–";
+  $("add").disabled = !live || !online;
+  if (live) {
+    $("status").textContent = "Lecture " + lectureNo(t) + " of " + LECTURES.length + " today. One shared counter, updated live for everyone."
+      + (online ? "" : " (Connecting...)");
+  } else {
+    const next = LECTURES.find(d => d > t);
+    $("status").textContent = "No class today, so counting is closed." + (next ? " Next lecture: " + label(next) + "." : "");
+  }
+  const list = Object.keys(counts).filter(d => counts[d] > 0 && LECTURES.includes(d))
+    .sort((a, b) => counts[b] - counts[a] || (a < b ? 1 : -1)).slice(0, 5);
+  const ol = $("top"); ol.innerHTML = "";
+  list.forEach(d => {
+    const li = document.createElement("li");
+    li.textContent = "L" + lectureNo(d) + " " + label(d) + ": " + counts[d];
+    ol.appendChild(li);
+  });
+  $("none").textContent = online ? "No lectures counted yet." : "Leaderboard unavailable right now.";
+  $("none").style.display = list.length ? "none" : "block";
+}
+
+const keyOf = d => API + "/%s/" + NS + "/C-" + d;
+async function readKey(d) {            // returns a number, 0 if the key does not exist yet
+  const r = await fetch(keyOf(d).replace("%s", "get"), { cache: "no-store" });
+  if (r.status === 404) return 0;
+  if (!r.ok) throw new Error("status " + r.status);
+  return Number((await r.json()).value) || 0;
+}
+let inflight = 0;
+async function refresh() {             // today's shared counter only
+  const t = todayStr();
+  if (!LECTURES.includes(t)) { online = true; render(); return; }
+  try {
+    const v = await readKey(t);
+    counts[t] = v; online = true;
+    if (inflight === 0) pending = 0;
+  } catch (e) { online = false; }
+  render();
+}
+
+const CACHE = "trumpCounterPast";
+async function loadPast() {            // past lectures: fetch once each, slowly, cache the final numbers
+  const t = todayStr();
+  let cache = {}; try { cache = JSON.parse(localStorage.getItem(CACHE)) || {}; } catch (e) {}
+  LECTURES.filter(d => d < t).forEach(d => { if (d in cache) counts[d] = cache[d]; });
+  render();
+  for (const d of LECTURES.filter(d => d < t && !(d in cache))) {
+    try {
+      cache[d] = await readKey(d); counts[d] = cache[d];
+      localStorage.setItem(CACHE, JSON.stringify(cache)); render();
+    } catch (e) { /* try again on the next page load */ }
+    await new Promise(r => setTimeout(r, 400));
+  }
+}
+
+$("add").addEventListener("click", async () => {
+  if (!isLectureDay()) return render();
+  const t = todayStr();
+  pending++; inflight++; render();
+  try {
+    const r = await fetch(keyOf(t).replace("%s", "hit"));
+    if (!r.ok) throw new Error("status " + r.status);
+  } catch (e) {
+    pending--; $("status").textContent = "Could not save that click: " + String(e).slice(0, 80);
+  }
+  inflight--;
+  refresh();
+});
+
+setInterval(refresh, POLL_MS);
+setInterval(render, 60000);
+render(); refresh(); loadPast();
+</script>
+</body>
+</html>
