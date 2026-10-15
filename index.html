@@ -74,9 +74,9 @@
   </main>
 <script>
 // ---- Config ----
-// Lectures: every Tuesday and Thursday, Thu Sep 3 to Tue Dec 1, 2026 (26 in total).
+// Lectures: every Tuesday and Thursday, Thu Sep 3 to Tue Dec 1, 2026, minus NO_CLASS (25 in total).
 // Add any cancelled dates to NO_CLASS as "YYYY-MM-DD".
-const FIRST = "2026-09-03", LAST = "2026-12-01", NO_CLASS = [];
+const FIRST = "2026-09-03", LAST = "2026-12-01", NO_CLASS = ["2026-10-13"];
 const TZ = "America/Toronto";
 // Shared storage: abacus.jasoncameron.dev (free counter API, no account, no email, no password).
 // One shared counter per lecture, key "C-<date>". Everyone sees the same number, refreshed every 3 seconds.
