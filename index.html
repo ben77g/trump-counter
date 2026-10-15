@@ -80,7 +80,7 @@
   <button id="add">+1</button>
   <div id="info">
   <div id="status"></div>
-  <p id="notice">Unofficial student-made counter. Not affiliated with any university or with the professor. Counts are entered by visitors and are unverified.</p>
+  <p id="notice">Unofficial student-made counter. Not affiliated with any university or with the professor. Counts are entered by hand and are unverified.</p>
   </div>
   </main>
 <script>
@@ -96,6 +96,26 @@ const TZ = "America/Toronto";
 const API = "https://abacus.jasoncameron.dev";
 const NS = "trumpcounter-mooo-site";
 const POLL_MS = 3000;
+// Input lock (soft, client side only): +1 works for the owner (key kept in this browser) or when mode.json says open.
+const OWNER_HASH = "a90778345f2a09f0920073bd6efa9740fe2f22ac685d1e6ba22a191d1d35a5b7";
+const sha = async t => Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t))))
+  .map(b => b.toString(16).padStart(2, "0")).join("");
+let isOwner = false, isOpen = false;
+const canWrite = () => isOwner || isOpen;
+async function initOwner() {
+  const m = /owner=([0-9a-f]+)/.exec(location.hash);
+  if (m) { try { if (await sha(m[1]) === OWNER_HASH) localStorage.setItem("tcOwner", m[1]); } catch (e) {}
+           history.replaceState(null, "", location.pathname + location.search); }
+  try { const k = localStorage.getItem("tcOwner"); isOwner = !!k && await sha(k) === OWNER_HASH; } catch (e) {}
+  render();
+}
+async function loadMode() {
+  try {
+    const r = await fetch("mode.json?t=" + Date.now(), { cache: "no-store" });
+    isOpen = r.ok && (await r.json()).open === true;
+  } catch (e) { isOpen = false; }      // fail closed
+  render();
+}
 const $ = id => document.getElementById(id);
 
 const todayStr = () => new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year:"numeric", month:"2-digit", day:"2-digit" }).format(new Date());
@@ -120,10 +140,11 @@ let pending = 0;      // clicks sent but not yet confirmed by a refresh
 function render() {
   const t = todayStr(), live = isLectureDay();
   $("count").textContent = live ? ((counts[t] || 0) + pending) : "–";
-  $("add").disabled = !live || !online;
+  $("add").disabled = !live || !online || !canWrite();
   if (live) {
     $("status").textContent = "Lecture " + lectureNo(t) + " of " + LECTURES.length + " today. One shared counter, updated live for everyone."
       + (online ? "" : " (Connecting...)");
+    if (!canWrite()) $("status").textContent = "Lecture " + lectureNo(t) + " of " + LECTURES.length + " today. Counting is closed right now; the number is still live.";
   } else {
     const next = LECTURES.find(d => d > t);
     $("status").textContent = "No class today, so counting is closed." + (next ? " Next lecture: " + label(next) + "." : "");
@@ -175,7 +196,7 @@ async function loadPast() {            // past lectures: fetch once each, slowly
 }
 
 $("add").addEventListener("click", async () => {
-  if (!isLectureDay()) return render();
+  if (!isLectureDay() || !canWrite()) return render();
   const t = todayStr();
   pending++; inflight++; render();
   try {
@@ -190,7 +211,8 @@ $("add").addEventListener("click", async () => {
 
 setInterval(refresh, POLL_MS);
 setInterval(render, 60000);
-render(); refresh(); loadPast();
+setInterval(loadMode, 30000);
+render(); initOwner(); loadMode(); refresh(); loadPast();
 </script>
 </body>
 </html>
