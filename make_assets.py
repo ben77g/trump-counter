@@ -1,6 +1,6 @@
-"""Builds head cutouts (prof_head.png, trump_head.png) and the woodgrain+burned-flag background (bg.jpg).
+"""Builds head cutouts (prof_head.png) and the woodgrain+burned-flag background (bg.jpg).
 Run (NixOS):  nix-shell -p "python3.withPackages (p: [p.rembg p.pillow p.onnxruntime p.numpy p.scipy])" --run "python3 make_assets.py"
-Inputs: prof.jpg, trump.jpg (originals). rembg downloads u2net_human_seg.onnx (~176 MB) to ~/.u2net on first run."""
+Inputs: prof.jpg (original). The second figure is built by make_jesus_torso.py. rembg downloads u2net_human_seg.onnx (~176 MB) to ~/.u2net on first run."""
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 rng = np.random.default_rng(0x168)
@@ -39,7 +39,7 @@ from rembg import remove, new_session
 sess = new_session("u2net_human_seg")
 # name: (source photo, row where the chin/neck ends, fade rows). Rows come from silhouette widths of the rembg output.
 # Trump is the Fulton County mugshot (1080x1080, public domain under Georgia law, Wikimedia Commons).
-SRC = {"prof": ("prof.jpg", 345, 14), "trump": ("trump_mugshot.jpg", 860, 30)}
+SRC = {"prof": ("prof.jpg", 345, 14)}
 # Edge clean-up for Prof (photo has a dark background that rembg leaves as a ~30% alpha haze on the right of his head):
 # drop alpha below CLEAN_T, then erode the mask by 2 px everywhere and by 5 px on the right half, then soften by 1 px.
 CLEAN = {"prof": {"t": 140, "erode": 2, "erode_right": 5}}
