@@ -36,6 +36,9 @@
   #submitmsg { margin-top:8px; font-size:.9rem; color:#666; }
   #send select { font-size:1rem; padding:6px; max-width:90vw; }
   @media (max-width:700px) {
+    body { display:flex; flex-direction:column; }
+    main { order:1; }
+    #board { order:2; }
     #board { position:relative; left:auto; top:auto; width:auto; margin:12px; max-height:none; }
     main { min-height:auto; padding:24px 16px; }
   }
