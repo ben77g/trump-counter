@@ -65,3 +65,4 @@ Two cut-out heads, a shared live counter with +1, a left board with the top 5 le
   filenames and commit messages). Anyone with an old clone must re-clone.
 - 2026-10-15: the torso cut-out is the only figure; it is centred (.trump left:50%, width 46%).
 - 2026-10-15: the photo of the professor was removed from the site on the owner's request (files prof*.jpg/png deleted from the repo).
+- 2026-10-15: page title, heading and og:title now read "360 Trump Counter" (owner's request).
