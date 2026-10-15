@@ -1,84 +1,10 @@
-"""Builds head cutouts (prof_head.png) and the woodgrain+burned-flag background (bg.jpg).
-Run (NixOS):  nix-shell -p "python3.withPackages (p: [p.rembg p.pillow p.onnxruntime p.numpy p.scipy])" --run "python3 make_assets.py"
-Inputs: prof.jpg (original). The second figure is built by make_jesus_torso.py. rembg downloads u2net_human_seg.onnx (~176 MB) to ~/.u2net on first run."""
+"""Builds the woodgrain+burned-flag background (bg.jpg) and the leaderboard board (board.jpg).
+Run (NixOS):  nix-shell -p "python3.withPackages (p: [p.pillow p.numpy])" --run "python3 make_assets.py"
+The figure itself is built by make_jesus_torso.py (needs rembg). Head cut-outs were removed 2026-10-15."""
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 rng = np.random.default_rng(0x168)
 import os
-
-# Prof: the owner uploaded an already-cut grayscale head on a white background (prof_upload.jpg, 2026-10-15).
-# It is used instead of rembg: white that touches the image border becomes transparent (soft ramp 210..250).
-def head_from_white_bg(src, dst, cut=303, fade=10):
-    """White touching the border -> transparent; edge colours are replaced by the nearest interior colour (no white
-    fringe); the face is eroded 2 px, softened 1 px; the white fade at the bottom is cut at row `cut` with a short fade."""
-    from scipy import ndimage
-    im = Image.open(src).convert("RGB")
-    rgb = np.array(im)
-    L = np.array(im.convert("L")).astype(float)
-    lab, _ = ndimage.label(L >= 240)   # 200 ate the bright right cheek/jaw: it touches the border
-    border = set(np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]]))) - {0}
-    fg = ~np.isin(lab, list(border))
-    fg = ndimage.binary_fill_holes(fg)
-    fg = ndimage.binary_erosion(fg, iterations=1)
-    lab2, n = ndimage.label(fg)
-    if n > 1:
-        sizes = ndimage.sum(fg, lab2, range(1, n + 1)); fg = lab2 == (1 + int(np.argmax(sizes)))
-    fg[cut:] = False
-    core = ndimage.binary_erosion(fg, iterations=3)
-    idx = ndimage.distance_transform_edt(~core, return_distances=False, return_indices=True)
-    rgb = rgb[idx[0], idx[1]]                      # every pixel takes the colour of its nearest interior pixel
-    alpha = np.array(Image.fromarray((fg * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(1.0))).astype(float)
-    alpha[cut - fade:cut] *= np.linspace(1, 0, fade)[:, None]
-    alpha[cut:] = 0
-    out = Image.fromarray(np.dstack([rgb, alpha]).astype(np.uint8), "RGBA")
-    out = out.crop(out.getbbox()); out.thumbnail((480, 480)); out.save(dst, optimize=True)
-    print("prof (uploaded)", out.size)
-
-# ---------- 1. head cutouts ----------
-from rembg import remove, new_session
-sess = new_session("u2net_human_seg")
-# name: (source photo, row where the chin/neck ends, fade rows). Rows come from silhouette widths of the rembg output.
-# Trump is the Fulton County mugshot (1080x1080, public domain under Georgia law, Wikimedia Commons).
-SRC = {"prof": ("prof.jpg", 345, 14)}
-# Edge clean-up for Prof (photo has a dark background that rembg leaves as a ~30% alpha haze on the right of his head):
-# drop alpha below CLEAN_T, then erode the mask by 2 px everywhere and by 5 px on the right half, then soften by 1 px.
-CLEAN = {"prof": {"t": 140, "erode": 2, "erode_right": 5}}
-XCROP = {"trump": (350, 990)}        # columns kept, so the wide shoulders of the mugshot do not shrink the head
-for n, (src, cut, fade) in SRC.items():
-    if n == "prof" and os.path.exists("prof_upload.jpg"):
-        head_from_white_bg("prof_upload.jpg", "prof_head.png"); continue
-    im = Image.open(src).convert("RGB")
-    rgba = np.array(remove(im, session=sess))
-    a = rgba[:, :, 3].astype(float)
-    if n in CLEAN:
-        c = CLEAN[n]
-        m = Image.fromarray(np.where(a < c["t"], 0, 255).astype(np.uint8))
-        k = lambda r: 2 * r + 1
-        left = m.filter(ImageFilter.MinFilter(k(c["erode"])))
-        right = m.filter(ImageFilter.MinFilter(k(c["erode_right"])))
-        L, R = np.array(left), np.array(right)
-        half = m.width // 2
-        merged = L.copy(); merged[:, half:] = R[:, half:]
-        # keep only the largest connected blob, so no stray specks survive
-        from scipy import ndimage
-        lab, nlab = ndimage.label(merged > 0)
-        if nlab > 1:
-            sizes = ndimage.sum(merged > 0, lab, range(1, nlab + 1))
-            merged = np.where(lab == (1 + int(np.argmax(sizes))), merged, 0).astype(np.uint8)
-        soft = Image.fromarray(merged).filter(ImageFilter.GaussianBlur(1.0))
-        a = np.minimum(a, np.array(soft).astype(float))
-    a[cut:] = 0
-    if n in XCROP:
-        x0, x1 = XCROP[n]
-        a[:, :x0] = 0; a[:, x1:] = 0
-        a[:, x0:x0 + 20] *= np.linspace(0, 1, 20)[None, :]; a[:, x1 - 20:x1] *= np.linspace(1, 0, 20)[None, :]
-    a[cut - fade:cut] *= np.linspace(1, 0, fade)[:, None]
-    rgba[:, :, 3] = a.astype(np.uint8)
-    out = Image.fromarray(rgba)
-    out = out.crop(out.getbbox())
-    out.thumbnail((480, 480))
-    out.save(f"{n}_head.png", optimize=True)
-    print(n, out.size)
 
 # ---------- 2. wood + burned flag ----------  (fade = soft bottom edge so the neck does not end in a hard line)
 W, H = 1920, 1080

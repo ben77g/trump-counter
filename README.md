@@ -42,13 +42,11 @@ Two cut-out heads, a shared live counter with +1, a left board with the top 5 le
 ## Look
 - Background bg.jpg (generated woodgrain with a flag burned in) and board.jpg (wooden leaderboard board), both made by
   make_assets.py. Leaderboard text is "burned in" with CSS (dark colour, scorch glow, SVG filter #burnrough, multiply).
-- Figures: prof_head.png is a transparent head cut-out supplied by the owner (an uploaded head on a white background,
-  processed by head_from_white_bg in make_assets.py: white touching the border becomes transparent, edge colours come from
-  the nearest interior pixel, bottom fade cut). trump_jesus_torso.png is a head-to-waist cut-out of an AI image
-  (trump_jesus_src.jpg, public domain on Wikimedia Commons), built by make_jesus_torso.py with rembg (`u2net_human_seg`).
-  The earlier mugshot and official-portrait cut-outs were removed 2026-10-15 (a mugshot beside a named person implied a link).
-- Do NOT re-run make_assets.py without moving prof_head.png aside; it rebuilds it from prof_upload.jpg.
-- Rebuild the head: `nix-shell -p "python3.withPackages (p: [p.rembg p.pillow p.onnxruntime p.numpy p.scipy])" --run "python3 make_assets.py"`
+- Figure: trump_jesus_torso.png is a head-to-waist cut-out of an AI image (trump_jesus_src.jpg, public domain on
+  Wikimedia Commons), built by make_jesus_torso.py with rembg (`u2net_human_seg`). It is centred in the box
+  (.trump left:50%, translateX(-50%), width 46%). The page shows no photo of any real person other than that image.
+  Earlier mugshot, portrait and head cut-outs were removed 2026-10-15.
+- Rebuild the background and board: `nix-shell -p "python3.withPackages (p: [p.rembg p.pillow p.onnxruntime p.numpy p.scipy])" --run "python3 make_assets.py"`
   (first run downloads a 176 MB model to ~/.u2net).
 - No heart behind the heads (removed 2026-10-15). Layout: main has padding-left 150px (290px under 1100px wide) and
   padding-top 12vh; the +1 button is pulled up with a negative margin in #add (0.2 of the block width).
@@ -65,4 +63,5 @@ Two cut-out heads, a shared live counter with +1, a left board with the top 5 le
 ## History
 - 2026-10-15: git history was rewritten twice (author email -> ben77g noreply address; then names scrubbed from files,
   filenames and commit messages). Anyone with an old clone must re-clone.
-- 2026-10-15: right-hand figure is now the torso cut-out above. Layout: .prof left:4%, .trump right:3% width:46%.
+- 2026-10-15: the torso cut-out is the only figure; it is centred (.trump left:50%, width 46%).
+- 2026-10-15: the photo of the professor was removed from the site on the owner's request (files prof*.jpg/png deleted from the repo).

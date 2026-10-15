@@ -32,7 +32,7 @@
   @media (max-width:1100px) { main { padding-left:290px; } }
   .heart { position:relative; width:min(600px, 88vw, 78vh * 1.1); aspect-ratio: 100 / 90; filter:drop-shadow(0 14px 18px rgba(0,0,0,.55)); }
   .heart img { position:absolute; top:4%; width:41%; height:auto; filter:drop-shadow(0 3px 4px rgba(0,0,0,.5)); }
-  .heart img.prof { left:4%; } .heart img.trump { right:3%; width:46%; top:2%; }
+  .heart img.trump { left:50%; transform:translateX(-50%); width:46%; top:2%; }
   .heart .label { position:absolute; left:0; right:0; top:52%; text-align:center; color:#fff; text-shadow:0 2px 4px rgba(0,0,0,.6); }
   .heart h1 { margin:0; font-size:clamp(1.1rem, 4.2vw, 2rem); letter-spacing:.04em; text-transform:uppercase; }
   #count { font-size:clamp(2.6rem, 11vw, 6rem); font-weight:800; margin:0; line-height:1.05; }
@@ -73,7 +73,6 @@
 </aside>
 <main>
   <div class="heart">
-    <img class="prof" src="prof_head.png" alt="">
     <img class="trump" src="trump_jesus_torso.png" alt="">
     <div class="label"><h1>Trump Counter</h1><p id="count">0</p></div>
   </div>
