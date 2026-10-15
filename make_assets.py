@@ -1,5 +1,5 @@
 """Builds head cutouts (prof_head.png, trump_head.png) and the woodgrain+burned-flag background (bg.jpg).
-Run (NixOS):  nix-shell -p "python3.withPackages (p: [p.rembg p.pillow p.onnxruntime p.numpy])" --run "python3 make_assets.py"
+Run (NixOS):  nix-shell -p "python3.withPackages (p: [p.rembg p.pillow p.onnxruntime p.numpy p.scipy])" --run "python3 make_assets.py"
 Inputs: prof.jpg, trump.jpg (originals). rembg downloads u2net_human_seg.onnx (~176 MB) to ~/.u2net on first run."""
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
@@ -11,11 +11,31 @@ sess = new_session("u2net_human_seg")
 # name: (source photo, row where the chin/neck ends, fade rows). Rows come from silhouette widths of the rembg output.
 # Trump is the Fulton County mugshot (1080x1080, public domain under Georgia law, Wikimedia Commons).
 SRC = {"prof": ("prof.jpg", 345, 14), "trump": ("trump_mugshot.jpg", 860, 30)}
+# Edge clean-up for Prof (photo has a dark background that rembg leaves as a ~30% alpha haze on the right of his head):
+# drop alpha below CLEAN_T, then erode the mask by 2 px everywhere and by 5 px on the right half, then soften by 1 px.
+CLEAN = {"prof": {"t": 140, "erode": 2, "erode_right": 5}}
 XCROP = {"trump": (350, 990)}        # columns kept, so the wide shoulders of the mugshot do not shrink the head
 for n, (src, cut, fade) in SRC.items():
     im = Image.open(src).convert("RGB")
     rgba = np.array(remove(im, session=sess))
     a = rgba[:, :, 3].astype(float)
+    if n in CLEAN:
+        c = CLEAN[n]
+        m = Image.fromarray(np.where(a < c["t"], 0, 255).astype(np.uint8))
+        k = lambda r: 2 * r + 1
+        left = m.filter(ImageFilter.MinFilter(k(c["erode"])))
+        right = m.filter(ImageFilter.MinFilter(k(c["erode_right"])))
+        L, R = np.array(left), np.array(right)
+        half = m.width // 2
+        merged = L.copy(); merged[:, half:] = R[:, half:]
+        # keep only the largest connected blob, so no stray specks survive
+        from scipy import ndimage
+        lab, nlab = ndimage.label(merged > 0)
+        if nlab > 1:
+            sizes = ndimage.sum(merged > 0, lab, range(1, nlab + 1))
+            merged = np.where(lab == (1 + int(np.argmax(sizes))), merged, 0).astype(np.uint8)
+        soft = Image.fromarray(merged).filter(ImageFilter.GaussianBlur(1.0))
+        a = np.minimum(a, np.array(soft).astype(float))
     a[cut:] = 0
     if n in XCROP:
         x0, x1 = XCROP[n]
