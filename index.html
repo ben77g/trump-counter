@@ -20,7 +20,6 @@
   #board .empty { font-size:.95rem; text-align:center; }
   main { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:0 16px 0 290px; box-sizing:border-box; }
   .heart { position:relative; width:min(600px, 88vw, 78vh * 1.1); aspect-ratio: 100 / 90; filter:drop-shadow(0 14px 18px rgba(0,0,0,.55)); }
-  .heart svg { position:absolute; inset:0; width:100%; height:100%; }
   .heart img { position:absolute; top:4%; width:41%; height:auto; filter:drop-shadow(0 3px 4px rgba(0,0,0,.5)); }
   .heart img.prof { left:7%; } .heart img.trump { right:9%; width:37%; }
   .heart .label { position:absolute; left:0; right:0; top:52%; text-align:center; color:#fff; text-shadow:0 2px 4px rgba(0,0,0,.6); }
@@ -61,10 +60,6 @@
 </aside>
 <main>
   <div class="heart">
-    <svg viewBox="0 0 100 90" aria-hidden="true">
-      <defs><radialGradient id="hg" cx="35%" cy="25%" r="80%"><stop offset="0" stop-color="#ff4a4a"/><stop offset=".55" stop-color="#d4141c"/><stop offset="1" stop-color="#7d0610"/></radialGradient></defs>
-      <path d="M50 88 C 12 56, 0 38, 0 25 C 0 9, 13 0, 26 0 C 38 0, 46 7, 50 15 C 54 7, 62 0, 74 0 C 87 0, 100 9, 100 25 C 100 38, 88 56, 50 88 Z" fill="url(#hg)"/>
-    </svg>
     <img class="prof" src="prof_head.png" alt="">
     <img class="trump" src="trump_head.png" alt="Donald Trump">
     <div class="label"><h1>Trump Counter</h1><p id="count">0</p></div>
