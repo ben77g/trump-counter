@@ -8,17 +8,29 @@ import os
 
 # Prof: the owner uploaded an already-cut grayscale head on a white background (prof_upload.jpg, 2026-10-15).
 # It is used instead of rembg: white that touches the image border becomes transparent (soft ramp 210..250).
-def head_from_white_bg(src, dst):
+def head_from_white_bg(src, dst, cut=298, fade=10):
+    """White touching the border -> transparent; edge colours are replaced by the nearest interior colour (no white
+    fringe); the face is eroded 2 px, softened 1 px; the white fade at the bottom is cut at row `cut` with a short fade."""
     from scipy import ndimage
     im = Image.open(src).convert("RGB")
+    rgb = np.array(im)
     L = np.array(im.convert("L")).astype(float)
-    lab, _ = ndimage.label(L >= 210)
+    lab, _ = ndimage.label(L >= 200)
     border = set(np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]]))) - {0}
-    bg = np.isin(lab, list(border))
-    alpha = np.where(bg, np.clip((250 - L) / 40, 0, 1), 1.0)
-    alpha = np.array(Image.fromarray((alpha * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(0.7)))
-    rgba = np.dstack([np.array(im), alpha])
-    out = Image.fromarray(rgba.astype(np.uint8), "RGBA")
+    fg = ~np.isin(lab, list(border))
+    fg = ndimage.binary_fill_holes(fg)
+    fg = ndimage.binary_erosion(fg, iterations=2)
+    lab2, n = ndimage.label(fg)
+    if n > 1:
+        sizes = ndimage.sum(fg, lab2, range(1, n + 1)); fg = lab2 == (1 + int(np.argmax(sizes)))
+    fg[cut:] = False
+    core = ndimage.binary_erosion(fg, iterations=4)
+    idx = ndimage.distance_transform_edt(~core, return_distances=False, return_indices=True)
+    rgb = rgb[idx[0], idx[1]]                      # every pixel takes the colour of its nearest interior pixel
+    alpha = np.array(Image.fromarray((fg * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(1.0))).astype(float)
+    alpha[cut - fade:cut] *= np.linspace(1, 0, fade)[:, None]
+    alpha[cut:] = 0
+    out = Image.fromarray(np.dstack([rgb, alpha]).astype(np.uint8), "RGBA")
     out = out.crop(out.getbbox()); out.thumbnail((480, 480)); out.save(dst, optimize=True)
     print("prof (uploaded)", out.size)
 
