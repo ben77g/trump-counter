@@ -28,6 +28,7 @@
   #count { font-size:clamp(2.6rem, 11vw, 6rem); font-weight:800; margin:0; line-height:1.05; }
   #status { max-width:560px; background:rgba(255,255,255,.82); padding:6px 12px; border-radius:8px; }
   button { font-size:1.6rem; padding:14px 36px; border:0; border-radius:12px; background:#b22222; color:#fff; cursor:pointer; }
+  #add { margin-top:calc(min(600px, 88vw, 78vh * 1.1) * -0.2 + 16px); position:relative; }
   button:active { transform:scale(.96); }
   #status { margin-top:14px; color:#333; font-size:.95rem; }
   #send { margin-top:26px; } #send h3 { margin:0 0 8px; font-size:1rem; }
@@ -65,7 +66,7 @@
     <img class="trump" src="trump_head.png" alt="Donald Trump">
     <div class="label"><h1>Trump Counter</h1><p id="count">0</p></div>
   </div>
-  <button id="add" style="margin-top:16px">+1</button>
+  <button id="add">+1</button>
   <div id="status"></div>
   </main>
 <script>
