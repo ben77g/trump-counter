@@ -8,23 +8,23 @@ import os
 
 # Prof: the owner uploaded an already-cut grayscale head on a white background (prof_upload.jpg, 2026-10-15).
 # It is used instead of rembg: white that touches the image border becomes transparent (soft ramp 210..250).
-def head_from_white_bg(src, dst, cut=298, fade=10):
+def head_from_white_bg(src, dst, cut=303, fade=10):
     """White touching the border -> transparent; edge colours are replaced by the nearest interior colour (no white
     fringe); the face is eroded 2 px, softened 1 px; the white fade at the bottom is cut at row `cut` with a short fade."""
     from scipy import ndimage
     im = Image.open(src).convert("RGB")
     rgb = np.array(im)
     L = np.array(im.convert("L")).astype(float)
-    lab, _ = ndimage.label(L >= 200)
+    lab, _ = ndimage.label(L >= 240)   # 200 ate the bright right cheek/jaw: it touches the border
     border = set(np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]]))) - {0}
     fg = ~np.isin(lab, list(border))
     fg = ndimage.binary_fill_holes(fg)
-    fg = ndimage.binary_erosion(fg, iterations=2)
+    fg = ndimage.binary_erosion(fg, iterations=1)
     lab2, n = ndimage.label(fg)
     if n > 1:
         sizes = ndimage.sum(fg, lab2, range(1, n + 1)); fg = lab2 == (1 + int(np.argmax(sizes)))
     fg[cut:] = False
-    core = ndimage.binary_erosion(fg, iterations=4)
+    core = ndimage.binary_erosion(fg, iterations=3)
     idx = ndimage.distance_transform_edt(~core, return_distances=False, return_indices=True)
     rgb = rgb[idx[0], idx[1]]                      # every pixel takes the colour of its nearest interior pixel
     alpha = np.array(Image.fromarray((fg * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(1.0))).astype(float)
