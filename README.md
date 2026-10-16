@@ -49,7 +49,7 @@ Two cut-out heads, a shared live counter with +1, a left board with the top 5 le
 - Rebuild the background and board: `nix-shell -p "python3.withPackages (p: [p.rembg p.pillow p.onnxruntime p.numpy p.scipy])" --run "python3 make_assets.py"`
   (first run downloads a 176 MB model to ~/.u2net).
 - No heart behind the heads (removed 2026-10-15). Layout: main has padding-left 150px (290px under 1100px wide) and
-  padding-top 12vh; there is no +1 button: the Trump picture (#add, an img) is the button, greyed out when counting is closed (2026-10-15).
+  padding-top 12vh; there is no +1 button: the Trump picture (#add, an img) is the button for the owner (never greyed out; it does nothing for visitors when closed). A visible +1 button (#addbtn) appears under the picture only while mode.json exempts today, for visitors (2026-10-15).
 - Preview screenshot: chromium --headless=new --no-sandbox --screenshot=out.png --window-size=1280,800 file://$PWD/index.html
 
 ## Link preview and discovery
