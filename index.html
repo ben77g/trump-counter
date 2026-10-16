@@ -16,20 +16,20 @@
 <link rel="icon" href="og.png">
 <style>
   body { margin:0; font-family: system-ui, sans-serif; background:#6b4423 url(bg.jpg) center/cover fixed no-repeat; color:#222; min-height:100vh; }
-  #board { position:fixed; left:14px; top:14px; width:262px; min-height:260px; max-height:calc(100vh - 28px); padding:22px 18px 26px; box-sizing:border-box;
+  #board { position:fixed; left:14px; top:14px; width:393px; min-height:390px; max-height:calc(100vh - 28px); padding:33px 27px 39px; box-sizing:border-box;
            background:#c99a60 url(board.jpg) center/cover; border-radius:10px; overflow:hidden;
            box-shadow:0 10px 22px rgba(0,0,0,.55), inset 0 0 0 2px rgba(60,30,8,.45), inset 0 0 26px rgba(40,18,4,.5); }
   /* burned in: dark char colour, scorch glow, rough edges from the SVG filter, multiplied into the grain */
   #board .burn { color:#1f0d04; font-family:"Courier New", Courier, monospace; font-weight:700; filter:url(#burnrough); mix-blend-mode:multiply;
                  text-shadow:0 0 2px rgba(15,5,0,.95), 0 0 7px rgba(70,28,4,.55); }
-  #board h2 { margin:0 0 4px; font-size:1.25rem; text-transform:uppercase; letter-spacing:.06em; text-align:center; border-bottom:3px double #1f0d04; padding-bottom:8px; }
-  #board .sub { font-size:.78rem; text-align:center; margin-bottom:12px; }
+  #board h2 { margin:0 0 6px; font-size:1.875rem; text-transform:uppercase; letter-spacing:.06em; text-align:center; border-bottom:3px double #1f0d04; padding-bottom:12px; }
+  #board .sub { font-size:1.17rem; text-align:center; margin-bottom:18px; }
   #board ol { padding-left:0; margin:0; list-style:none; counter-reset:n; }
-  #board li { margin:10px 0; font-size:1.02rem; counter-increment:n; }
+  #board li { margin:15px 0; font-size:1.53rem; counter-increment:n; }
   #board li::before { content:counter(n) ". "; }
-  #board .empty { font-size:.95rem; text-align:center; }
-  main { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:12vh 16px 0 150px; box-sizing:border-box; }
-  @media (max-width:1100px) { main { padding-left:290px; } }
+  #board .empty { font-size:1.43rem; text-align:center; }
+  main { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:12vh 16px 0 225px; box-sizing:border-box; }
+  @media (max-width:1100px) { main { padding-left:435px; } }
   .heart { position:relative; width:min(600px, 88vw, 78vh * 1.1); aspect-ratio: 100 / 90; filter:drop-shadow(0 14px 18px rgba(0,0,0,.55)); }
   .heart img { position:absolute; top:4%; width:41%; height:auto; filter:drop-shadow(0 3px 4px rgba(0,0,0,.5)); }
   .heart img.trump { left:50%; transform:translateX(-50%); width:46%; top:2%; }
