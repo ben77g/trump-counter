@@ -33,12 +33,14 @@
   .heart { position:relative; width:min(600px, 88vw, 78vh * 1.1); aspect-ratio: 100 / 90; filter:drop-shadow(0 14px 18px rgba(0,0,0,.55)); }
   .heart img { position:absolute; top:4%; width:41%; height:auto; filter:drop-shadow(0 3px 4px rgba(0,0,0,.5)); }
   .heart img.trump { left:50%; transform:translateX(-50%); width:46%; top:2%; }
-  .heart .label { position:absolute; left:0; right:0; top:52%; text-align:center; color:#fff; text-shadow:0 2px 4px rgba(0,0,0,.6); }
+  .heart .label { pointer-events:none; position:absolute; left:0; right:0; top:52%; text-align:center; color:#fff; text-shadow:0 2px 4px rgba(0,0,0,.6); }
   .heart h1 { margin:0; font-size:clamp(1.1rem, 4.2vw, 2rem); letter-spacing:.04em; text-transform:uppercase; }
   #count { font-size:clamp(2.6rem, 11vw, 6rem); font-weight:800; margin:0; line-height:1.05; }
   #info { max-width:560px; background:rgba(255,255,255,.82); padding:6px 12px; border-radius:8px; margin-top:14px; }
   button { font-size:1.6rem; padding:14px 36px; border:0; border-radius:12px; background:#b22222; color:#fff; cursor:pointer; }
-  #add { margin-top:calc(min(600px, 88vw, 78vh * 1.1) * -0.2 + 16px); position:relative; }
+  #add { cursor:pointer; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-drag:none; transition:transform .08s; }
+  #add:active { transform:translateX(-50%) scale(.97); }
+  #add.off { cursor:not-allowed; filter:drop-shadow(0 3px 4px rgba(0,0,0,.5)) grayscale(.6) opacity(.75); }
   #notice { margin:6px 0 0; padding-top:6px; border-top:1px solid rgba(0,0,0,.15); font-size:.78rem; color:#555; }
   button:active { transform:scale(.96); }
   #status { margin:0; color:#333; font-size:.95rem; }
@@ -73,10 +75,9 @@
 </aside>
 <main>
   <div class="heart">
-    <img class="trump" src="trump_jesus_torso.png" alt="">
+    <img class="trump" id="add" src="trump_jesus_torso.png" alt="Trump: click to add one" role="button" tabindex="0">
     <div class="label"><h1>360 Trump Counter</h1><p id="count">0</p></div>
   </div>
-  <button id="add">+1</button>
   <div id="info">
   <div id="status"></div>
   <p id="notice">Unofficial student-made counter. Not affiliated with any university or with the professor. Counts are entered by hand and are unverified.</p>
@@ -139,7 +140,7 @@ let pending = 0;      // clicks sent but not yet confirmed by a refresh
 function render() {
   const t = todayStr(), live = isLectureDay();
   $("count").textContent = live ? ((counts[t] || 0) + pending) : "–";
-  $("add").disabled = !live || !online || !canWrite();
+  $("add").classList.toggle("off", !live || !online || !canWrite());
   if (live) {
     $("status").textContent = "Lecture " + lectureNo(t) + " of " + LECTURES.length + " today. One shared counter, updated live for everyone."
       + (online ? "" : " (Connecting...)");
@@ -195,7 +196,7 @@ async function loadPast() {            // past lectures: fetch once each, slowly
 }
 
 $("add").addEventListener("click", async () => {
-  if (!isLectureDay() || !canWrite()) return render();
+  if (!isLectureDay() || !online || !canWrite()) return render();
   const t = todayStr();
   pending++; inflight++; render();
   try {
@@ -208,6 +209,8 @@ $("add").addEventListener("click", async () => {
   refresh();
 });
 
+$("add").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("add").click(); } });
+$("add").addEventListener("dragstart", e => e.preventDefault());
 setInterval(refresh, POLL_MS);
 setInterval(render, 60000);
 setInterval(loadMode, 30000);
